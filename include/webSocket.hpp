@@ -22,12 +22,6 @@
 //Parses the data into a recognised struct
 #include "JsonParser.hpp"
 
-// Template function to connect and
-// read from a WebSocket
-//
-struct AlpacaRequest{
-  std::string hostName, port, path;
-};
 
 // Template function to connect and
 // read from a WebSocket
@@ -36,20 +30,20 @@ template<typename dType>
 class clientWebSocketIO{
   private:
     std::string path, hostname, port;
-    SSL_CTX* ctx;
-    SSL* ssl;
+    SSL_CTX* ctx=NULL;
+    SSL* ssl=NULL;
     int server_fd;
     std::string ConnStatus, sdType;
     const std::string kApiKey    = "PKZLV5L2XPYAFM5HVTLO";
     const std::string kApiSecret = "4zLDE7vbS1ABhNWlFNCJLgdeqsXyp45f3va0q8AO";
 
-    void throwSSLError(std::string ErrMessage);
+    void closeOutSSLConnection(std::string ErrMessage, bool IsErr);
   public:
     clientWebSocketIO(const std::string path_
                     , const std::string host_
                     , const std::string port_);
 
-    void readDatablock(std::string & response, const std::string request);
+    void readDatablock(std::string & response, const std::string & request);
 
     ~clientWebSocketIO();
 };
@@ -129,18 +123,16 @@ clientWebSocketIO<dType>::clientWebSocketIO(const std::string path_
 
     // Create an SSL object
     ssl = SSL_new(ctx);
-    if (!ssl) throwSSLError( "Unable to create SSL structure");
+    if (!ssl) closeOutSSLConnection( "Unable to create SSL structure", true);
 
     // **Set the SNI hostname**
     SSL_set_fd(ssl, server_fd);
     bool checkSNI = SSL_set_tlsext_host_name(ssl, hostname.c_str() );
-    if(checkSNI != true) SSL_free(ssl);
-    if(checkSNI != true) throwSSLError( "Error setting SNI hostname");
+    if(checkSNI != true) closeOutSSLConnection( "Error setting SNI hostname", true);
 
     // Perform SSL handshake
     int sslID = SSL_connect(ssl);
-    if (sslID <= 0) SSL_free(ssl);
-    if (sslID <= 0) throwSSLError( "SSL connection failed");
+    if (sslID <= 0) closeOutSSLConnection( "SSL connection failed", true);
 };
 
 
@@ -148,15 +140,16 @@ clientWebSocketIO<dType>::clientWebSocketIO(const std::string path_
 //read in a data block
 //
 template<typename dType>
-void clientWebSocketIO<dType>::readDatablock(std::string & response, const std::string request){
+void clientWebSocketIO<dType>::readDatablock(std::string & response, const std::string & request){
     // Send the request
     int bytes_sent = SSL_write(ssl, request.c_str(), request.length());
     if (bytes_sent <= 0) SSL_free(ssl);
-    if (bytes_sent <= 0) throwSSLError("Failed to send request" );
+    if (bytes_sent <= 0) closeOutSSLConnection("Failed to send request",true);
  
     // Buffer to hold incoming data
     char buffer[BUFFER_SIZE];
     unsigned aggregate_bytes=0;
+    std::string tot_response = "";
     response = "";
 
     // Read the response
@@ -165,35 +158,37 @@ void clientWebSocketIO<dType>::readDatablock(std::string & response, const std::
       unsigned bytes_received = SSL_read(ssl, buffer, sizeof(buffer));
       aggregate_bytes = aggregate_bytes + bytes_received;
       //Need a better measurement of when to stop
-      if (bytes_received >  0) response.append(buffer, bytes_received);
+      if (bytes_received >  0) tot_response.append(buffer, bytes_received);
       if(bytes_received <= 0) break;
     }
+
+    // Separate headers and body
+    std::string headers;
+    size_t pos = tot_response.find("\r\n\r\n");
+    if (pos != std::string::npos) headers = tot_response.substr(0, pos);
+    if (pos != std::string::npos) response = tot_response.substr(pos + 4);
+    if (pos == std::string::npos) response = tot_response; // No headers found, return entire response
 };
 
 // Close the connection
 // and release the socket
 //
 template<typename dType>
-clientWebSocketIO<dType>::~clientWebSocketIO(){
-    // Close SSL connection
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
-    close(server_fd);
-    SSL_CTX_free(ctx);
-    EVP_cleanup();
-};
+clientWebSocketIO<dType>::~clientWebSocketIO(){ closeOutSSLConnection(" ", false); };
 
-// Throw an exception,
-// close the connection
-// and release the socket
+// Throws an exception if there is
+// an error otherwise closes
+// connection gracefully
 //
 template<typename dType>
-void  clientWebSocketIO<dType>::throwSSLError(std::string ErrMessage){
-  std::cerr <<  ErrMessage << std::endl;
-  ERR_print_errors_fp(stderr);
+void  clientWebSocketIO<dType>::closeOutSSLConnection(std::string ErrMessage, bool IsErr){
+  if(IsErr)  std::cerr <<  ErrMessage << std::endl;
+  if(IsErr) ERR_print_errors_fp(stderr);
+  if(ssl != NULL) SSL_shutdown(ssl);
+  if(ssl != NULL) SSL_free(ssl);
   close(server_fd);
-  SSL_CTX_free(ctx);
+  if(ctx != NULL) SSL_CTX_free(ctx);
   EVP_cleanup();
-  exit(EXIT_FAILURE);
-}
+  if(IsErr) exit(EXIT_FAILURE);
+};
 #endif

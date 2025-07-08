@@ -50,13 +50,50 @@ int main(){
   webData.readDatablock(response, request);
   Document document;
   document.Parse(response.c_str());
-  std::cout << response << std::endl;
 
+  std::cout << response << std::endl;
+  std::cout << std::endl;
 //  cout << "Total devices : " << Dhandler.Get_Total_NDevs()  << endl;
 //  cout << "Total Cores   : " << Dhandler.Get_Total_NCores() << endl;
-
 //  string body;
 //  for(int I=0; I<5; I++) webData.readDatablock(body, true);
 
+  // Dissecting the document
+  //
+  assert(document["bars"].IsObject());
+  Value &bars = document["bars"];
+  assert(bars["BTC/USD"].IsObject());
+
+/*
+  std::vector<std::string> DataNames;
+  DataNames.push_back();
+  DataNames.push_back();
+  DataNames.push_back();
+  DataNames.push_back();
+*/
+
+  Value &BTCUSDbars = bars["BTC/USD"];
+  assert(BTCUSDbars["l"].IsDouble());
+  assert(BTCUSDbars["t"].IsString());
+
+  uint64_t cVal = BTCUSDbars["l"].GetDouble();
+  std::cout << std::setw(5) << "l : " << std::setw(15) << std::setprecision(15) << cVal << std::endl;
+  std::cout << "Hello "<< std::endl;
+
+/*
+{"bars":{"BTC/USD":{"c":108107.1635,"h":108107.1635,"l":108107.1635,"n":0,"o":108107.1635,"t":"2025-07-08T05:43:00Z","v":0,"vw":108107.1635}}}
+*/
   return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
