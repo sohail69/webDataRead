@@ -1,13 +1,32 @@
-#include "rapidjson/reader.h"
-#include <iostream>
+#pragma once
+#include <map>
+#include <array>
+#include <tuple>
+#include <cmath>
 #include <vector>
+#include <iostream>
+#include "rapidjson/reader.h"
+#include "rapidjson/document.h"
 
+using namespace rapidjson;
+using namespace std;
+/***************************************\
+!
+!
+! Breaks up a JSon Data string into a
+! Hierarchical pair structure
+!
+!
+\***************************************/
 // Compile with:
 // g++ -std=c++17 -O3 -g -o main main.cpp
 //
 
-using namespace rapidjson;
-using namespace std;
+struct Quotes{
+  //Stored Data
+  vector<double> bid;
+  vector<string> keys;
+};
 
 struct QuotesHandler{
   //Stored Data
@@ -70,17 +89,18 @@ struct QuotesHandler{
   //Array end handler
   bool EndArray(SizeType elementCount) { cout << "EndArray(" << elementCount << ")" << endl; return true; }
 };
+/*
 
-int main() {
-    const char json[] = "{\"quotes\":{\"BTC/USD\":{\"ap\":105243.44,\"as\":1.601,\"bp\":105089.5,\"bs\":1.60307,\"t\":\"2025-06-15T12:09:56.052328511Z\"}}}";
+{"quotes":{"BTC/USD":{"ap":105243.44,"as":1.601,"bp":105089.5,"bs":1.60307,"t":"2025-06-15T12:09:56.052328511Z"}}}
+*/
 
-    QuotesHandler handler;
-    Reader reader;
-    StringStream ss(json);
-    reader.Parse(ss, handler);
 
-    cout << handler.MaxObjectDepth << endl;
-    for(int I=0; I < handler.keys.size(); I++) cout << handler.keys[I] << endl;
+template<typename T>
+class QuotesParser{
+  
 
-    return 0;
-}
+
+};
+
+
+
