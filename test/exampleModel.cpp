@@ -11,10 +11,14 @@ using namespace std;
 
 
 //
-// Generate 
+// Generate random number
+// using a linear congruential
+// generators
 //
-//
-
+template<typename INT>
+INT LCG_RNG(INT Seed, INT A, INT C, INT M){
+  return (A*Seed + C)%M;
+};
 
 //
 // Generate a simple 
@@ -43,10 +47,45 @@ void MetropolisHastings(){
 };
 
 int main(){
+  int Seed = 3;
+  int M = 2147483648; //2^31
+  int A = 22695477;
+  int C = 1;
+  double Sig2 = 0.03, mu = 0.6;
+
 
   for(int I=0; I< 1000; I++){
-
+    Seed = LCG_RNG<int> (Seed, A, C, M);
+    double x = double(Seed);
+    double z = NormalDist(x, Sig2, mu);
+    cout << setw(10) << I
+         << setw(10) << x
+         << setw(10) << z << endl;
   }
 
   return 0;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
