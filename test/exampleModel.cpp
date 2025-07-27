@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <array>
+#include "../include/rickerKernel.hpp"
 
 using namespace std;
 // Compile with:
@@ -85,7 +86,7 @@ Real NormalDist(Real x, Real Sig2, Real mu){
 // Main function
 //
 int main(){
-  const unsigned N=3, M=3;
+  const unsigned N=4, M=4;
   uint32_t rqd_seed = 0UL;
   double mu = 0.9;
   array<double,M> epsi, beta;
@@ -98,17 +99,20 @@ int main(){
   beta[0]=0.30; alpha[0]=0.30;
   beta[1]=0.15; alpha[1]=0.15;
   beta[2]=0.05; alpha[2]=0.05;
+  beta[3]=0.30; alpha[3]=0.30;
 
-  sig[0]=0.001; epsi[0]=0.03;
-  sig[1]=0.050; epsi[1]=0.001;
-  sig[2]=0.05;  epsi[2]=0.05;
+  sig[0]=0.010; epsi[0]=0.3;
+  sig[1]=0.050; epsi[1]=0.0001;
+  sig[2]=0.005; epsi[2]=0.05;
+  sig[3]=0.010; epsi[3]=0.3;
 
   Rt_s[0] = mu;
-  Rt_s[1] = mu;
-  Rt_s[2] = mu;
+  Rt_s[1] = mu+0.1;
+  Rt_s[2] = mu-0.2;
+  Rt_s[3] = mu-0.5;
 
 
-  for(int I=0; I< 500; I++){
+  for(int I=0; I< 1000; I++){
     rqd_seed  = randqd_uint32(rqd_seed);    //caclulate random number
     double x  = rqd_seed/ double(1L << 32); //Calc   x
     double Sig2 = GARCH_volatility2<double,M,N>(mu, epsi, beta, sig, alpha);
