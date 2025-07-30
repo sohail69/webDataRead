@@ -4,7 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <array>
-#include "../include/rickerKernel.hpp"
+#include "../include/modelGARCH.hpp"
+#include "../include/RNGs.hpp"
 
 using namespace std;
 // Compile with:
@@ -58,35 +59,12 @@ Real GARCH_volatility2(Real & mu
   return Sig2;
 };
 
-//
-// Generate random number
-// using a linear congruential
-// generators
-//
-uint32_t randqd_uint32(uint32_t rqd_seed){    
-    rqd_seed = (uint32_t) (1664525UL * rqd_seed + 1013904223UL);
-    return rqd_seed;
-};
-
-//
-// Generate a simple 
-// sample from a normal
-// distribution
-//
-template<typename Real>
-Real NormalDist(Real x, Real Sig2, Real mu){
-  Real PI = Real(3.1415926535897932384626433832795028841971);
-  Real a  = 1.00/sqrt(2.00*PI*Sig2);
-  Real b  = -(x - mu)*(x - mu)/(2.00*Sig2);
-  return a*exp(b);
-};
-
 
 //
 // Main function
 //
 int main(){
-  const unsigned N=4, M=4;
+  const unsigned N=2, M=2;
   uint32_t rqd_seed = 0UL;
   double mu = 0.9;
   array<double,M> epsi, beta;
@@ -96,23 +74,17 @@ int main(){
   ofstream OutFile;                 //The output file
   OutFile.open("randDistTest.dat"); //The random dist tests
 
-  beta[0]=0.30; alpha[0]=0.30;
+  beta[0]=0.49; alpha[0]=0.01;
   beta[1]=0.15; alpha[1]=0.15;
-  beta[2]=0.05; alpha[2]=0.05;
-  beta[3]=0.30; alpha[3]=0.30;
 
-  sig[0]=0.010; epsi[0]=0.3;
-  sig[1]=0.050; epsi[1]=0.0001;
-  sig[2]=0.005; epsi[2]=0.05;
-  sig[3]=0.010; epsi[3]=0.3;
+  sig[0]=0.99; epsi[0]=0.3;
+  sig[1]=0.80; epsi[1]=0.1;
 
   Rt_s[0] = mu;
   Rt_s[1] = mu+0.1;
-  Rt_s[2] = mu-0.2;
-  Rt_s[3] = mu-0.5;
 
 
-  for(int I=0; I< 1000; I++){
+  for(int I=0; I< 500; I++){
     rqd_seed  = randqd_uint32(rqd_seed);    //caclulate random number
     double x  = rqd_seed/ double(1L << 32); //Calc   x
     double Sig2 = GARCH_volatility2<double,M,N>(mu, epsi, beta, sig, alpha);
@@ -122,7 +94,7 @@ int main(){
     Update_series<double,N>(Sig2, sig);
     Update_series<double,M>(Epsi2, epsi);
     Update_series<double,N>(Rt, Rt_s);
-    mu = Calc_mean<double,N>(Rt_s);
+//    mu = Calc_mean<double,N>(Rt_s);
 
     OutFile << setw(16) << I
             << setw(16) << x

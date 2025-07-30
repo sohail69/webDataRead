@@ -1,5 +1,21 @@
 #pragma once
 #include <cmath>
+#include <array>
+#include <vector>
+
+//
+// Definition of a 
+// fixed width Matrix
+//
+template<typename Num, unsigned N>
+using FWMatrix = std::vector<std::array<Num, N>>;
+
+//
+// Definition of a
+// Vector
+//
+template<typename Num, unsigned N>
+using Vector = std::vector<Num>;
 
 //
 // Mexican hat Mother wavelet
@@ -14,7 +30,12 @@ Real MexHatWaveFunc(const Real & z){
 // Tensor wavelet transform
 // for a vector
 //
-template<typename Real>
-void WaveTensorTransform(Real z){
-
-}
+template<typename Real, unsigned N>
+void WaveTensorTransform(const FWMatrix<Real,N> & Z_ij, Vector<Real> & Psi_j){
+  for(int J=0; J<Psi_j.size(); J++){
+    Psi_j[J] = 1.0;
+    for(int I=0; I<N; I++){
+      Psi_j[J] *= MexHatWaveFunc(Z_ij[I][J]);
+    }
+  }
+};
